@@ -8,13 +8,8 @@ description: Change a basic vertical Menu into a expandable accordion menu with 
 <div class="alert callout">
   <h5>Known Issues</h5>
   <ul>
-    <li>Needs accessibility compliant keyboard access bindings.</li>
     <li>Needs directional arrows.</li>
   </ul>
-</div>
-
-<div class="primary callout">
-  <p>Accordion menus have no custom CSS&mdash;you just need the base Menu CSS.</p>
 </div>
 
 ```html_example

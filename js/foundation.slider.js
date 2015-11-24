@@ -1,10 +1,10 @@
 /**
  * Slider module.
  * @module foundation.slider
- * @requires foundation.util.animationFrame
+ * @requires foundation.util.motion
  * @requires foundation.util.triggers
  * @requires foundation.util.keyboard
- * @requires foundation.util.addtouch
+ * @requires foundation.util.touch
  */
 !function($, Foundation){
   'use strict';
@@ -43,21 +43,96 @@
   }
 
   Slider.defaults = {
+    /**
+     * Minimum value for the slider scale.
+     * @option
+     * @example 0
+     */
     start: 0,
+    /**
+     * Maximum value for the slider scale.
+     * @option
+     * @example 100
+     */
     end: 100,
+    /**
+     * Minimum value change per change event. Not Currently Implemented!
+
+     */
     step: 1,
+    /**
+     * Value at which the handle/input *(left handle/first input)* should be set to on initialization.
+     * @option
+     * @example 0
+     */
     initialStart: 0,
+    /**
+     * Value at which the right handle/second input should be set to on initialization.
+     * @option
+     * @example 100
+     */
     initialEnd: 100,
+    /**
+     * Allows the input to be located outside the container and visible. Set to by the JS
+     * @option
+     * @example false
+     */
     binding: false,
+    /**
+     * Allows the user to click/tap on the slider bar to select a value.
+     * @option
+     * @example true
+     */
     clickSelect: true,
+    /**
+     * Set to true and use the `vertical` class to change alignment to vertical.
+     * @option
+     * @example false
+     */
     vertical: false,
+    /**
+     * Allows the user to drag the slider handle(s) to select a value.
+     * @option
+     * @example true
+     */
     draggable: true,
+    /**
+     * Disables the slider and prevents event listeners from being applied. Double checked by JS with `disabledClass`.
+     * @option
+     * @example false
+     */
     disabled: false,
+    /**
+     * Allows the use of two handles. Double checked by the JS. Changes some logic handling.
+     * @option
+     * @example false
+     */
     doubleSided: false,
-    steps: 100,
+    /**
+     * Potential future feature.
+     */
+    // steps: 100,
+    /**
+     * Number of decimal places the plugin should go to for floating point precision.
+     * @option
+     * @example 2
+     */
     decimal: 2,
-    dragDelay: 0,
+    /**
+     * Time delay for dragged elements.
+     */
+    // dragDelay: 0,
+    /**
+     * Time, in ms, to animate the movement of a slider handle if user clicks/taps on the bar. Needs to be manually set if updating the transition time in the Sass settings.
+     * @option
+     * @example 200
+     */
     moveTime: 200,//update this if changing the transition time in the sass
+    /**
+     * Class applied to disabled sliders.
+     * @option
+     * @example 'disabled'
+     */
     disabledClass: 'disabled'
   };
   /**
@@ -68,7 +143,7 @@
   Slider.prototype._init = function(){
     this.inputs = this.$element.find('input');
     this.handles = this.$element.find('[data-slider-handle]');
-    this.options.vertical = this.$element.hasClass('vertical');
+
     this.$handle = this.handles.eq(0);
     this.$input = this.inputs.length ? this.inputs.eq(0) : $('#' + this.$handle.attr('aria-controls'));
     this.$fill = this.$element.find('[data-slider-fill]').css(this.options.vertical ? 'height' : 'width', 0);
@@ -120,7 +195,6 @@
    */
   Slider.prototype._setHandlePos = function($hndl, location, noInvert, cb){
   //might need to alter that slightly for bars that will have odd number selections.
-    // console.log(str, cb);
     location = parseFloat(location);//on input change events, convert string to number...grumble.
     // prevent slider from running out of bounds
     if(location < this.options.start){ location = this.options.start; }
@@ -180,8 +254,8 @@
                      */
                     _this.$element.trigger('moved.zf.slider', [$hndl]);
                 });
-
-    Foundation.Move(_this.options.moveTime, $hndl, function(){
+    var moveTime = _this.$element.data('dragging') ? 1000/60 : _this.options.moveTime;
+    /*var move = new */Foundation.Move(moveTime, $hndl, function(){
       $hndl.css(lOrT, movement + '%');
       if(!_this.options.doubleSided){
         _this.$fill.css(hOrW, pctOfBar * 100 + '%');
@@ -189,6 +263,7 @@
         _this.$fill.css(css);
       }
     });
+    // move.do();
   };
   /**
    * Sets the initial attribute for the slider element.
@@ -285,7 +360,7 @@
       });
 
     if(this.options.clickSelect){
-      this.$element.off('click.zf.slider').on('click.zf.slider', function(e){
+      this.$element.off('mousedown.zf.slider').on('mousedown.zf.slider', function(e){
         if(_this.$element.data('dragging')){ return false; }
         _this.animComplete = false;
         if(_this.options.doubleSided){
@@ -308,16 +383,16 @@
 
           $handle.addClass('is-dragging');
           _this.$fill.addClass('is-dragging');//
-          _this.$element.attr('data-dragging', true);
+          _this.$element.data('dragging', true);
           _this.animComplete = false;
           curHandle = $(e.currentTarget);
 
           $body.on('mousemove.zf.slider', function(e){
             e.preventDefault();
 
-            timer = setTimeout(function(){
+            // timer = setTimeout(function(){
               _this._handleEvent(e, curHandle);
-            }, _this.options.dragDelay);
+            // }, _this.options.dragDelay);
           }).on('mouseup.zf.slider', function(e){
             clearTimeout(timer);
 
@@ -408,29 +483,3 @@
 //   }
 //   cb();
 // };
-!function(){
-  $.fn.addTouch = function(){
-    this.each(function(i,el){
-      $(el).bind('touchstart touchmove touchend touchcancel',function(){
-        //we pass the original event object because the jQuery event
-        //object is normalized to w3c specs and does not provide the TouchList
-        handleTouch(event);
-      });
-    });
-
-    var handleTouch = function(event){
-      var touches = event.changedTouches,
-          first = touches[0],
-          eventTypes = {
-            touchstart: 'mousedown',
-            touchmove: 'mousemove',
-            touchend: 'mouseup'
-          },
-          type = eventTypes[event.type];
-
-      var simulatedEvent = document.createEvent('MouseEvent');
-      simulatedEvent.initMouseEvent(type, true, true, window, 1, first.screenX, first.screenY, first.clientX, first.clientY, false, false, false, false, 0/*left*/, null);
-      first.target.dispatchEvent(simulatedEvent);
-    };
-  };
-}();

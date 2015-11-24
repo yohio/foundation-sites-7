@@ -9,7 +9,7 @@ js: js/foundation.slider.js
 <div class="alert callout">
   <h5>Known Issues</h5>
   <ul>
-    <li>Vertical orientation isn't smooth on Windows Phone.</li>
+    <li>Feedback Requested.</li>
   </ul>
 </div>
 
@@ -30,10 +30,10 @@ It's got a handle and an active fill, what more do you need?
 
 ## Vertical
 
-Let's get vertical. Just add a `vertical` class to `slider` `<div>`.
+Let's get vertical. Just add a `vertical` class and `data-vertical="true"` to `slider` `<div>`.
 
 ```html_example
-<div class="slider vertical" data-slider data-initial-start='25' data-end='200'>
+<div class="slider vertical" data-slider data-initial-start='25' data-end='200' data-vertical="true">
   <span class="slider-handle" data-slider-handle role="slider" tabindex="1"></span>
   <span class="slider-fill" data-slider-fill></span>
   <input type="hidden">

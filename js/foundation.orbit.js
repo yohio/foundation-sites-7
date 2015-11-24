@@ -2,9 +2,9 @@
  * Orbit module.
  * @module foundation.orbit
  * @requires foundation.util.keyboard
- * @requires foundation.util.animationFrame
  * @requires foundation.util.motion
- * @requires foundation.util.timer
+ * @requires foundation.util.timerAndImageLoader
+ * @requires foundation.util.touch
  */
 !function($, Foundation){
   'use strict';
@@ -31,25 +31,110 @@
           'ARROW_RIGHT': 'previous'
         }
     });
-    // this.$element.trigger('init.zf.orbit');
   }
   Orbit.defaults = {
+    /**
+     * Tells the JS to loadBullets.
+     * @option
+     * @example true
+     */
     bullets: true,
+    /**
+     * Tells the JS to apply event listeners to nav buttons
+     * @option
+     * @example true
+     */
     navButtons: true,
+    /**
+     * motion-ui animation class to apply
+     * @option
+     * @example 'slide-in-right'
+     */
     animInFromRight: 'slide-in-right',
+    /**
+     * motion-ui animation class to apply
+     * @option
+     * @example 'slide-out-right'
+     */
     animOutToRight: 'slide-out-right',
+    /**
+     * motion-ui animation class to apply
+     * @option
+     * @example 'slide-in-left'
+     *
+     */
     animInFromLeft: 'slide-in-left',
+    /**
+     * motion-ui animation class to apply
+     * @option
+     * @example 'slide-out-left'
+     */
     animOutToLeft: 'slide-out-left',
+    /**
+     * Allows Orbit to automatically animate on page load.
+     * @option
+     * @example true
+     */
     autoPlay: true,
+    /**
+     * Amount of time, in ms, between slide transitions
+     * @option
+     * @example 5000
+     */
     timerDelay: 5000,
+    /**
+     * Allows Orbit to infinitely loop through the slides
+     * @option
+     * @example true
+     */
     infiniteWrap: true,
+    /**
+     * Allows the Orbit slides to bind to swipe events for mobile, requires an additional util library
+     * @option
+     * @example true
+     */
     swipe: true,
+    /**
+     * Allows the timing function to pause animation on hover.
+     * @option
+     * @example true
+     */
     pauseOnHover: true,
+    /**
+     * Allows Orbit to bind keyboard events to the slider, to animate frames with arrow keys
+     * @option
+     * @example true
+     */
     accessible: true,
+    /**
+     * Class applied to the container of Orbit
+     * @option
+     * @example 'orbit-container'
+     */
     containerClass: 'orbit-container',
+    /**
+     * Class applied to individual slides.
+     * @option
+     * @example 'orbit-slide'
+     */
     slideClass: 'orbit-slide',
+    /**
+     * Class applied to the bullet container. You're welcome.
+     * @option
+     * @example 'orbit-bullets'
+     */
     boxOfBullets: 'orbit-bullets',
+    /**
+     * Class applied to the `next` navigation button.
+     * @option
+     * @example 'orbit-next'
+     */
     nextClass: 'orbit-next',
+    /**
+     * Class applied to the `previous` navigation button.
+     * @option
+     * @example 'orbit-previous'
+     */
     prevClass: 'orbit-previous'
   };
   /**
@@ -69,7 +154,7 @@
     }
 
     if(this.options.bullets){
-      this.loadBullets();
+      this._loadBullets();
     }
 
     this._events();
@@ -77,7 +162,7 @@
     if(this.options.autoPlay){
       this.geoSync();
     }
-    if (this.options.accessible) { // allow wrapper to be focusable to enable arrow navigation
+    if(this.options.accessible){ // allow wrapper to be focusable to enable arrow navigation
       this.$wrapper.attr('tabindex', 0);
     }
   };
@@ -86,7 +171,7 @@
    * @function
    * @private
    */
-  Orbit.prototype.loadBullets = function(){
+  Orbit.prototype._loadBullets = function(){
     this.$bullets = this.$element.find('.' + this.options.boxOfBullets).find('button');
   };
   /**
@@ -95,12 +180,13 @@
    */
   Orbit.prototype.geoSync = function(){
     var _this = this;
-    this.timer = new Foundation.NanuNanu(
+    this.timer = new Foundation.Timer(
                       this.$element,
-                      {duration: this.options.timerDelay},
+                      {duration: this.options.timerDelay,
+                       infinite: false},
                       function(){
                         _this.changeSlide(true);
-    });
+                      });
     this.timer.start();
   };
   /**
@@ -110,8 +196,8 @@
    */
   Orbit.prototype._prepareForOrbit = function(){
     var _this = this;
-    this.setWrapperHeight(function(max){
-      _this.setSlideHeight(max);
+    this._setWrapperHeight(function(max){
+      _this._setSlideHeight(max);
     });
   };
   /**
@@ -120,7 +206,7 @@
    * @private
    * @param {Function} cb - a callback function to fire when complete.
    */
-  Orbit.prototype.setWrapperHeight = function(cb){//rewrite this to `for` loop
+  Orbit.prototype._setWrapperHeight = function(cb){//rewrite this to `for` loop
     var max = 0, temp, counter = 0;
 
     this.$slides.each(function(){
@@ -144,7 +230,7 @@
    * @function
    * @private
    */
-  Orbit.prototype.setSlideHeight = function(height){
+  Orbit.prototype._setSlideHeight = function(height){
     this.$slides.each(function(){
       $(this).css('max-height', height);
     });
@@ -158,18 +244,16 @@
     var _this = this;
 
     //***************************************
-    //**currently using jQuery Mobile event**
-    //**see comments below, needs to change**
+    //**Now using custom event - thanks to:**
+    //**      Yohai Ararat of Toronto      **
     //***************************************
     if(this.options.swipe){
       this.$slides.off('swipeleft.zf.orbit swiperight.zf.orbit')
       .on('swipeleft.zf.orbit', function(e){
         e.preventDefault();
-        _this.timer.restart();
         _this.changeSlide(true);
       }).on('swiperight.zf.orbit', function(e){
         e.preventDefault();
-        _this.timer.restart();
         _this.changeSlide(false);
       });
     }
@@ -193,19 +277,11 @@
 
     if(this.options.navButtons){
       var $controls = this.$element.find('.' + this.options.nextClass + ', .' + this.options.prevClass);
-      if(this.options.accessible){
-        $controls.attr('tabindex', 0);
+      $controls.attr('tabindex', 0)
         //also need to handle enter/return and spacebar key presses
-      }
-      $controls.on('click.zf.orbit touchend.zf.orbit', function(){
-        if($(this).hasClass(_this.options.nextClass)){
-          _this.changeSlide(true);
-          _this.timer.restart();
-        }else{
-          _this.changeSlide(false);
-          _this.timer.restart();
-        }
-      });
+               .on('click.zf.orbit touchend.zf.orbit', function(){
+                 _this.changeSlide($(this).hasClass(_this.options.nextClass));
+               });
     }
 
     if(this.options.bullets){
@@ -223,11 +299,9 @@
       // handle keyboard event with keyboard util
       Foundation.Keyboard.handleKey(e, _this, {
         next: function() {
-          _this.timer.restart();
           _this.changeSlide(true);
         },
         previous: function() {
-          _this.timer.restart();
           _this.changeSlide(false);
         },
         handled: function() { // if bullet is focused, make sure focus moves
@@ -285,7 +359,9 @@
         this.options['animOutTo' + dirOut],
         function(){
           $curSlide.removeAttr('aria-live');
-          _this.timer.restart();
+          if(_this.options.autoPlay){
+            _this.timer.restart();
+          }
           //do stuff?
           /**
            * Triggers when the slide has finished animating in.
@@ -315,7 +391,6 @@
     delete this.timer;
     this.$element.off('.zf.orbit').find('*').off('.zf.orbit').end().hide();
     Foundation.unregisterPlugin(this);
-    // this.$element.trigger('destroyed.zf.orbit');
   };
 
   Foundation.plugin(Orbit);

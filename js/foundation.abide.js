@@ -18,11 +18,7 @@
     this._init();
     this._events();
 
-    /**
-     * Fires when the plugin has been successfuly initialized.
-     * @event Abide#init
-     */
-    this.$element.trigger('init.zf.abide');
+    Foundation.registerPlugin(this);
   }
 
   /**
@@ -102,7 +98,6 @@
       .find('input, textarea, select')
         .off('.abide')
         .on('blur.fndtn.abide change.fndtn.abide', function (e) {
-          // console.log($(e.target));
           if (self.options.validateOn === 'fieldChange') {
             self.validateInput($(e.target), self.$element);
           }
@@ -313,9 +308,9 @@
     var self = this,
         valid = false,
         patternLib = this.options.patterns,
-        inputText = $(el).val(),
+        inputText = $($el).val(),
         // maybe have a different way of parsing this bc people might use type
-        pattern = $(el).attr('pattern');
+        pattern = $($el).attr('pattern');
 
     // if there's no value, then return true
     // since required check has already been done
@@ -379,6 +374,9 @@
     $('.form-error.is-visible').removeClass('is-visible');
     $form.find('[data-abide-error]').css('display', 'none');
     $(':input', $form).not(':button, :submit, :reset, :hidden, [data-abide-ignore]').val('').removeAttr(invalidAttr);
+  };
+  Abide.prototype.destroy = function(){
+    //TODO this...
   };
 
   Foundation.plugin(Abide);

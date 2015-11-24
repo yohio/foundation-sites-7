@@ -2,7 +2,8 @@
  * AccordionMenu module.
  * @module foundation.accordionMenu
  * @requires foundation.util.keyboard
- * @requires foundation.util.animationFrame
+ * @requires foundation.util.motion
+ * @requires foundation.util.nest
  */
 !function($) {
   'use strict';
@@ -18,16 +19,10 @@
     this.$element = element;
     this.options = $.extend({}, AccordionMenu.defaults, this.$element.data(), options);
 
-    Foundation.FeatherNest(this.$element, 'accordion');
+    Foundation.Nest.Feather(this.$element, 'accordion');
 
     this._init();
 
-
-    /**
-     * Fires when the plugin has been successfuly initialized.
-     * @event AccordionMenu#init
-     */
-    // this.$element.trigger('init.zf.accordionMenu');
     Foundation.registerPlugin(this);
     Foundation.Keyboard.register('AccordionMenu', {
       'ENTER': 'toggle',
@@ -43,11 +38,19 @@
   }
 
   AccordionMenu.defaults = {
+    /**
+     * Amount of time to animate the opening of a submenu in ms.
+     * @option
+     * @example 250
+     */
     slideSpeed: 250,
-    wrapOnKeys: false,
-    multiOpen: false
-
-  }
+    /**
+     * Allow the menu to have multiple open panes.
+     * @option
+     * @example true
+     */
+    multiOpen: true
+  };
 
   /**
    * Initializes the accordion menu by hiding all nested menus.
@@ -57,7 +60,7 @@
     this.$element.find('[data-submenu]').not('.is-active').slideUp(0);//.find('a').css('padding-left', '1rem');
     this.$element.attr({
       'role': 'tablist',
-      'multiselectable': this.options.multiOpen
+      'aria-multiselectable': this.options.multiOpen
     });
 
     this.$menuLinks = this.$element.find('.has-submenu');
@@ -140,7 +143,6 @@
           if ($target.is(':hidden')) {
             _this.down($target);
             $target.find('li').first().focus();
-            console.log($target.find('li').first());
           }
         },
         close: function() {
@@ -170,11 +172,20 @@
           e.stopImmediatePropagation();
         }
       });
-    })//.attr('tabindex', 0);
+    });//.attr('tabindex', 0);
   };
+  /**
+   * Closes all panes of the menu.
+   * @function
+   */
   AccordionMenu.prototype.hideAll = function(){
     this.$element.find('[data-submenu]').slideUp(this.options.slideSpeed);
   };
+  /**
+   * Toggles the open/close state of a submenu.
+   * @function
+   * @param {jQuery} $target - the submenu to toggle
+   */
   AccordionMenu.prototype.toggle = function($target){
     if (!$target.is(':hidden')) {
       this.up($target);
@@ -191,22 +202,16 @@
   AccordionMenu.prototype.down = function($target) {
     var _this = this;
     console.log($target);
-    $target.addClass('is-active').attr({'aria-hidden': false})
-      .parent('.has-submenu').attr('aria-expanded', true).end()
-      .parentsUntil(this.$element, '[data-submenu]')
-      // .addBack();
-
-      Foundation.Move(this.options.slideSpeed, $target, function(){
-        $target.slideDown(_this.options.slideSpeed)
-      });
-      // window.requestAnimationFrame(function(){
-      //   $target.slideDown(_this.options.slideSpeed).promise().done(function(){
-      //     // $target.siblings('a').eq(0).focus();
-      //   });
-      // });
     if(!this.options.multiOpen){
       this.up(this.$element.find('.is-active').not($target.parentsUntil(this.$element)));
     }
+
+    $target.addClass('is-active').attr({'aria-hidden': false})
+      .parent('.has-submenu').attr({'aria-expanded': true, 'aria-selected': true});
+
+      Foundation.Move(this.options.slideSpeed, $target, function(){
+        $target.slideDown(_this.options.slideSpeed);
+      });
     /**
      * Fires when the menu is done collapsing up.
      * @event AccordionMenu#down
@@ -220,9 +225,17 @@
    * @fires AccordionMenu#up
    */
   AccordionMenu.prototype.up = function($target) {
-    $target.slideUp(this.options.slideSpeed, function() {
-      $target.find('[data-submenu]').slideUp(0).attr('aria-hidden', true);
-    }).attr('aria-hidden', true).parent('.has-submenu').attr('aria-expanded', false);
+    var _this = this;
+    Foundation.Move(this.options.slideSpeed, $target, function(){
+      $target.slideUp(_this.options.slideSpeed);
+    });
+    $target.attr('aria-hidden', true)
+           .find('[data-submenu]').slideUp(0).attr('aria-hidden', true).end()
+           .parent('.has-submenu')
+           .attr({'aria-expanded': false, 'aria-selected': false});
+    // $target.slideUp(this.options.slideSpeed, function() {
+    //   $target.find('[data-submenu]').slideUp(0).attr('aria-hidden', true);
+    // }).attr('aria-hidden', true).parent('.has-submenu').attr({'aria-expanded': false, 'aria-selected': false});
 
     /**
      * Fires when the menu is done collapsing up.
@@ -239,13 +252,9 @@
     this.$element.find('[data-submenu]').slideDown(0).css('display', '');
     this.$element.find('a').off('click.zf.accordionMenu');
 
-    /**
-     * Fires when the plugin has been destroyed.
-     * @event AccordionMenu#destroy
-     */
-    // this.$element.trigger('destroyed.zf.accordionMenu');
+    Foundation.Nest.Burn(this.$element, 'accordion');
     Foundation.unregisterPlugin(this);
   };
 
   Foundation.plugin(AccordionMenu);
-}(jQuery)
+}(jQuery, window.Foundation);

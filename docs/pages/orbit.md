@@ -13,9 +13,6 @@ tags:
   <h5>Known Issues</h5>
   <ul>
     <li>Images sometimes vanish from the view/script, throwing errors and breaking things.</li>
-    <li>Images sometimes animate in from the wrong side... for no good reason.</li>
-    <li>Maybe needs to wait for images to load fully before calculating height. Occasionally loads in at caption height instead of full slide height because the images haven't loaded yet.</li>
-    <li>Needs a new `swipe` event, probably a `$.fn` event that can be used elsewhere as well.</li>
  </ul>
 </div>
 
@@ -30,20 +27,20 @@ tags:
     <button class="orbit-previous" aria-label="previous"><span class="show-for-sr">Previous Slide</span>&#9664;</button>
     <button class="orbit-next" aria-label="next"><span class="show-for-sr">Next Slide</span>&#9654;</button>
     <li class="is-active orbit-slide">
-      <img class="orbit-image" src="/assets/img/interchange/small.jpg" alt="Space">
+      <img class="orbit-image" src="assets/img/orbit-1.jpg" alt="Space">
       <figcaption class="orbit-caption">Space, the final frontier.</figcaption>
     </li>
     <li class="orbit-slide">
-      <img class="orbit-image" src="http://placekitten.com/g/500/300" alt="Space">
-      <figcaption class="orbit-caption">222222222222</figcaption>
+      <img class="orbit-image" src="assets/img/orbit-2.jpg" alt="Space">
+      <figcaption class="orbit-caption">Lets Rocket!</figcaption>
     </li>
     <li class="orbit-slide">
-      <img class="orbit-image" src="http://placekitten.com/g/600/300" alt="Space">
-      <figcaption class="orbit-caption">3333333333333</figcaption>
+      <img class="orbit-image" src="assets/img/orbit-3.jpg" alt="Space">
+      <figcaption class="orbit-caption">Encapsulating</figcaption>
     </li>
     <li class="orbit-slide">
-      <img class="orbit-image" src="http://placekitten.com/g/700/300" alt="Space">
-      <figcaption class="orbit-caption">4444444444444</figcaption>
+      <img class="orbit-image" src="assets/img/orbit-4.jpg" alt="Space">
+      <figcaption class="orbit-caption">Outta This World</figcaption>
     </li>
   </ul>
 <!-- </div> -->

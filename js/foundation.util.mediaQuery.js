@@ -57,14 +57,14 @@ var MediaQuery = {
     var self = this;
     var extractedStyles = $('.foundation-mq').css('font-family');
     var namedQueries;
-    
+
     namedQueries = parseStyleToObject(extractedStyles);
 
     for (var key in namedQueries) {
       self.queries.push({
         name: key,
         value: 'only screen and (min-width: ' + namedQueries[key] + ')'
-      })
+      });
     }
 
     this.current = this._getCurrentSize();
@@ -92,7 +92,11 @@ var MediaQuery = {
       }
     }
 
-    return matched.name;
+    if(typeof matched === 'object') {
+      return matched.name;
+    } else {
+      return matched;
+    }
   },
 
   /**
@@ -115,7 +119,7 @@ var MediaQuery = {
       }
     });
   }
-}
+};
 
 Foundation.MediaQuery = MediaQuery;
 

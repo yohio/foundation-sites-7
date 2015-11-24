@@ -2,9 +2,9 @@
  * Accordion module.
  * @module foundation.accordion
  * @requires foundation.util.keyboard
- * @requires foundation.util.animationFrame
+ * @requires foundation.util.motion
  */
-!function($) {
+!function($, Foundation) {
   'use strict';
 
   /**
@@ -18,10 +18,7 @@
     this.options = $.extend({}, Accordion.defaults, this.$element.data(), options);
 
     this._init();
-    /**
-     * Fires when the plugin has been successfuly initialized.
-     * @event Accordion#init
-     */
+
     Foundation.registerPlugin(this);
     Foundation.Keyboard.register('Accordion', {
       'ENTER': 'toggle',
@@ -32,8 +29,23 @@
   }
 
   Accordion.defaults = {
+    /**
+     * Amount of time to animate the opening of an accordion pane.
+     * @option
+     * @example 250
+     */
     slideSpeed: 250,
+    /**
+     * Allow the accordion to have multiple open panes.
+     * @option
+     * @example false
+     */
     multiExpand: false,
+    /**
+     * Allow the accordion to close all panes.
+     * @option
+     * @example false
+     */
     allowAllClosed: false
   };
 
@@ -110,6 +122,11 @@
       }
     });
   };
+  /**
+   * Toggles the selected content pane's open/close state.
+   * @param {jQuery} $target - jQuery object of the pane to toggle.
+   * @function
+   */
   Accordion.prototype.toggle = function($target){
     if($target.parent().hasClass('is-active')){
       if(this.options.allowAllClosed || $target.parent().siblings().hasClass('is-active')){
@@ -121,8 +138,10 @@
   };
   /**
    * Opens the accordion tab defined by `$target`.
-   * @param {jQuery} $target - Accordion tab to open.
+   * @param {jQuery} $target - Accordion pane to open.
+   * @param {Boolean} firstTime - flag to determine if reflow should happen.
    * @fires Accordion#down
+   * @function
    */
   Accordion.prototype.down = function($target, firstTime) {
     var _this = this;
@@ -149,7 +168,7 @@
     $('#' + $target.attr('aria-labelledby')).attr({
       'aria-expanded': true,
       'aria-selected': true
-    })
+    });
     /**
      * Fires when the tab is done opening.
      * @event Accordion#down
@@ -161,6 +180,7 @@
    * Closes the tab defined by `$target`.
    * @param {jQuery} $target - Accordion tab to close.
    * @fires Accordion#up
+   * @function
    */
   Accordion.prototype.up = function($target) {
     var $aunts = $target.parent().siblings(),
@@ -172,7 +192,7 @@
     }
 
     Foundation.Move(this.options.slideSpeed, $target, function(){
-      $target.slideUp(_this.options.slideSpeed)
+      $target.slideUp(_this.options.slideSpeed);
     });
 
     $target.attr('aria-hidden', true)
@@ -181,7 +201,7 @@
     $('#' + $target.attr('aria-labelledby')).attr({
      'aria-expanded': false,
      'aria-selected': false
-    })
+   });
 
     /**
      * Fires when the tab is done collapsing up.
@@ -193,18 +213,14 @@
   /**
    * Destroys an instance of an accordion.
    * @fires Accordion#destroyed
+   * @function
    */
   Accordion.prototype.destroy = function() {
     this.$element.find('[data-tab-content]').slideUp(0).css('display', '');
     this.$element.find('a').off('.zf.accordion');
 
-    /**
-     * Fires when the plugin has been destroyed.
-     * @event Accordion#destroyed
-     */
-    // this.$element.trigger('destroyed.zf.accordion');
     Foundation.unregisterPlugin(this);
-  }
+  };
 
   Foundation.plugin(Accordion);
-}(jQuery);
+}(jQuery, window.Foundation);

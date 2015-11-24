@@ -2,7 +2,8 @@
  * DropdownMenu module.
  * @module foundation.dropdown-menu
  * @requires foundation.util.keyboard
- * @requires foundation.util.size-and-collision
+ * @requires foundation.util.box
+ * @requires foundation.util.nest
  */
 !function(Foundation, $) {
   'use strict';
@@ -18,7 +19,7 @@
     this.$element = element;
     this.options = $.extend({}, DropdownMenu.defaults, this.$element.data(), options);
 
-    Foundation.FeatherNest(this.$element, 'dropdown');
+    Foundation.Nest.Feather(this.$element, 'dropdown');
 
     this._init();
 
@@ -45,15 +46,60 @@
    */
   DropdownMenu.defaults = {
     // toggleOn: 'both',
+    /**
+     * Allow a submenu to open/remain open on parent click event. Allows cursor to move away from menu.
+     * @option
+     * @example true
+     */
     clickOpen: true,
+    /**
+     * Allow clicks on the body to close any open submenus.
+     * @option
+     * @example false
+     */
     closeOnClick: false,
+    /**
+     * Disallows hover events from opening submenus
+     * @option
+     * @example false
+     */
     disableHover: false,
+    /**
+     * Allow a submenu to automatically close on a mouseleave event.
+     * @option
+     * @example true
+     */
     autoclose: true,
+    /**
+     * Amount of time to delay opening a submenu on hover event.
+     * @option
+     * @example 150
+     */
     hoverDelay: 150,
+    /**
+     * Amount of time to delay closing a submenu on a mouseleave event.
+     * @option
+     * @example 500
+     */
     closingTime: 500,
     // wrapOnKeys: true,
+    /**
+     * Position of the menu relative to what direction the submenus should open. Handled by JS.
+     * @option
+     * @example 'left'
+     */
     alignment: 'left',
+    /**
+     * Class applied to vertical oriented menus, Foundation default is `vertical`. Update this if using your own class.
+     * @option
+     * @example 'vertical'
+     */
     verticalClass: 'vertical',
+    /**
+     * Class applied to right-side oriented menus, Foundation default is `align-right`. Update this if using your own class.
+     * @option
+     * @example 'align-right'
+     */
     rightClass: 'align-right'
   };
   /**
@@ -83,12 +129,12 @@
     this.$menuItems.children('a').attr('tabindex', -1);
     if(this.$element.hasClass(this.options.rightClass)){
       this.options.alignment = 'right';
-      this.$submenus.addClass('is-right-arrow');
+      this.$submenus.addClass('is-left-arrow opens-left');
     }else{
-      this.$submenus.addClass('is-left-arrow');
+      this.$submenus.addClass('is-right-arrow opens-right');
     }
     if(!this.vertical){
-      this.$tabs.removeClass('is-right-arrow is-left-arrow').addClass('is-down-arrow');
+      this.$tabs.removeClass('is-right-arrow is-left-arrow opens-left opens-right').addClass('is-down-arrow');
     }
 
     this.$tabs.each(function(){
@@ -107,9 +153,9 @@
     this.$submenus.each(function(){
       var $sub = $(this);
 
-      if(_this.options.alignment === 'right'){
-        $sub.children('[data-submenu]').addClass('is-right-arrow');
-      }
+      // if(_this.options.alignment === 'right'){
+      //   $sub.children('[data-submenu]').addClass('is-right-arrow');
+      // }
 
       $sub.children('[data-submenu]')
           .attr({
@@ -131,7 +177,7 @@
     var _this = this;
 
     if(this.options.clickOpen){
-      $elem.on('click.zf.dropdownmenu tap.zf.dropdownmenu touchend.zf.dropdownmenu', function(e){
+      $elem.children('a').on('click.zf.dropdownmenu touchend.zf.dropdownmenu', function(e){
         if($(e.target).parent('li').hasClass('has-submenu')){
           e.preventDefault();
           e.stopPropagation();
@@ -291,7 +337,7 @@
     $body.not(_this.$element).on('click.zf.dropdownmenu tap.zf.dropdownmenu touchend.zf.dropdownmenu', function(e){
       _this._hideAll();
       $body.off('click.zf.dropdownmenu tap.zf.dropdownmenu touchend.zf.dropdownmenu');
-    })
+    });
   };
 //show & hide stuff @private
   /**
@@ -312,14 +358,21 @@
 
 
     //break this into own function
-    var clear = Foundation.ImNotTouchingYou($sub, null, true);
+    var clear = Foundation.Box.ImNotTouchingYou($sub, null, true);
     if(!clear){
       if(this.options.alignment === 'left'){
-        $sub.removeClass('is-left-arrow').addClass('is-right-arrow');
+        $elem.removeClass('opens-left').addClass('opens-right');
       }else{
-        $sub.removeClass('is-right-arrow').addClass('is-left-arrow');
+        $elem.removeClass('opens-right').addClass('opens-left');
       }
       this.changed = true;
+
+      // still not clear, small screen, add inner class
+      clear = Foundation.Box.ImNotTouchingYou($sub, null, true);
+      if (!clear) {
+        $elem.removeClass('opens-left opens-right').addClass('opens-inner');
+        this.changed = true;
+      }
     }
     $sub.css('visibility', '');
     /**
@@ -351,7 +404,7 @@
       //   console.log('true');
       //   $elems.blur();
       // }
-      $elems.removeClass('is-active').data('isClick', false)
+      $elems.removeClass('is-active opens-inner').data('isClick', false)
 
             .find('.is-active').removeClass('is-active').data('isClick', false).end()
 
@@ -361,9 +414,9 @@
       if(this.changed){
         //remove position class
         if(this.options.alignment === 'left'){
-          $elems.find('.is-right-arrow').removeClass('is-right-arrow').addClass('is-left-arrow');
+          $elems.find('.opens-left').removeClass('opens-left').addClass('opens-right');
         }else{
-          $elems.find('.is-left-arrow').removeClass('is-left-arrow').addClass('is-right-arrow');
+          $elems.find('.opens-right').removeClass('opens-right').addClass('opens-left');
         }
       }
       /**
@@ -398,15 +451,16 @@
     this.$element
         .removeData('zf-plugin')
         .find('li')
-        .removeClass('js-dropdown-nohover')
-        .off('.zf.dropdownmenu');
-
+        .removeClass('js-dropdown-nohover is-right-arrow is-left-arrow opens-left opens-inner opens-right')
+        .add('a').off('.zf.dropdownmenu')
+        .end().find('ul').removeClass('first-sub');
+    Foundation.Nest.Burn(this.$element, 'dropdown');
     Foundation.unregisterPlugin(this);
   };
   Foundation.plugin(DropdownMenu);
 
-  function checkClass($elem){
+  var checkClass = function($elem){
     return $elem.hasClass('is-active');
-  }
+  };
 
 }(Foundation, jQuery);

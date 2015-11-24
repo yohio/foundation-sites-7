@@ -24,13 +24,13 @@
       cssClass: 'accordion-menu',
       plugin: Foundation._plugins['accordion-menu'] || null
     }
-  }
+  };
 
   // [PH] Media queries
   var phMedia = {
     small: '(min-width: 0px)',
     medium: '(min-width: 640px)'
-  }
+  };
 
   /**
    * Creates a new instance of a responsive menu.
@@ -49,11 +49,6 @@
     this._events();
 
     Foundation.registerPlugin(this);
-    // /**
-    //  * Fires when the plugin has been successfuly initialized.
-    //  * @event ResponsiveMenu#init
-    //  */
-    //  this.$element.trigger('init.zf.ResponsiveMenu');
   }
 
   ResponsiveMenu.defaults = {};
@@ -95,9 +90,12 @@
   ResponsiveMenu.prototype._events = function() {
     var _this = this;
 
-    $(window).on('resize.zf.ResponsiveMenu', function() {
+    $(window).on('changed.zf.mediaquery', function() {
       _this._checkMediaQueries();
     });
+    // $(window).on('resize.zf.ResponsiveMenu', function() {
+    //   _this._checkMediaQueries();
+    // });
   };
 
   /**
@@ -107,7 +105,6 @@
    */
   ResponsiveMenu.prototype._checkMediaQueries = function() {
     var matchedMq, _this = this;
-
     // Iterate through each rule and find the last matching rule
     $.each(this.rules, function(key) {
       if (Foundation.MediaQuery.atLeast(key)) {
@@ -132,7 +129,7 @@
     // Create an instance of the new plugin
     if (this.currentPlugin) this.currentPlugin.destroy();
     this.currentPlugin = new this.rules[matchedMq].plugin(this.$element, {});
-  }
+  };
 
   /**
    * Destroys the instance of the current plugin on this element, as well as the window resize handler that switches the plugins out.
@@ -141,8 +138,8 @@
   ResponsiveMenu.prototype.destroy = function() {
     this.currentPlugin.destroy();
     $(window).off('.zf.ResponsiveMenu');
-  }
-  // ResponsiveMenu.prototype.DropdownMenu = Foundation.DropdownMenu;
+    Foundation.unregisterPlugin(this);
+  };
   Foundation.plugin(ResponsiveMenu);
 
-}(Foundation, jQuery)
+}(Foundation, jQuery);
